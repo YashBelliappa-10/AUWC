@@ -1,0 +1,88 @@
+% Absorption coefficient alpha and scattering coefficient beta
+alpha = input("Enter the absorption coefficient alpha value: "); % Absorption coefficient alpha(lambda)
+beta = input("Enter the scattering coefficient beta value: "); % Scattering coefficient beta(lambda)
+C_ab = alpha + beta; % Total extinction coefficient
+
+% Power and Length
+pt = input("Enter the power of the transmitting end: "); % Optical transmitting power
+pr = input("Enter the power of the receiving end: "); % Optical receiver power
+p = (pr + pt) / 2; % Average power between the transmitting and receiving end
+d = input("Enter the length of the water channel in meters: "); % Length of water channel
+
+% Extinction coefficient C(λ)
+C = 1/d * log(pt/pr); % The extinction coefficient C(λ) of the aqueous medium consists of the absorption coefficient and the scattering α(λ), β(λ).
+
+% Optical efficiencies and Angles
+eta1 = input("Enter the eta1 value: ");  % Optical efficiency of the transmitter (ηT)
+eta2 = input("Enter the eta2 value: "); % Optical efficiency of the receiver (ηR)
+theta = input("Enter the theta value in degree: ");
+theta1 = deg2rad(theta); % Convert theta to radians
+disp(theta1)
+Arec = input("Enter the receiver aperture area in m^2: ");
+thetao = input("Enter the value for thetao in degree: ");
+theta2 = deg2rad(thetao); % Convert thetao to radians
+
+% Calculate received power for non-aqueous and aqueous medium
+pr_non_medium = pt * eta1 * eta2 * exp((-C_ab * d / cos(theta1))) * Arec * cos(theta1) / (pi * (d * tan(theta2))^2);
+pr_aqueous_medium = pt * eta1 * eta2 * exp((-C * d / cos(theta1))) * Arec * cos(theta1) / (pi * (d * tan(theta2))^2);
+
+% Calculation of the SNR
+p1 = input("Enter initial power in the first medium (in watts): ");
+p2 = input("Enter change in power found in the next medium (in watts): ");
+pn = p1 + p2; % Noise produced power
+SNR = 10 * log10(pr / pn);
+
+% Refractive index calculation
+c= 3*10^-8; % Speed of light in m/s
+v = input("Enter the velocity (in m/s): ");
+lambda = input("Enter the value of the wavelength in nm: ");
+lambda = lambda * 10^-9; % Convert wavelength from nm to meters
+frequency = v / lambda;  % Frequency calculation
+RI = c / v;
+
+% Plotting
+concentration = 0.01:0.01:0.1;
+RI2 = concentration;
+figure;
+plot(concentration, RI2, '-o');
+hold on;
+xlabel("Concentration (g/L)");
+ylabel("RI");
+title("Refractive Index vs Concentration");
+
+concentration1 = 0.01:0.001:1;
+pr1 = 1 ./ concentration1;
+figure;
+plot(concentration1, pr1, '-o');
+hold on;
+xlabel("Concentration (g/L)");
+ylabel("pr1");
+title("Received Power vs Concentration");
+
+concentration2 = 0.01:0.5:10;
+snr = 1 ./ concentration2;
+figure;
+plot(concentration2, snr, '-ob');
+hold on;
+xlabel("Concentration (g/L)");
+ylabel("SNR (dB)");
+title("Signal-to-Noise Ratio (SNR) vs Concentration");
+
+concentration3 = 0.01:0.001:1;
+attenuation= concentration3;
+figure;
+plot(concentration3, attenuation, '-o');
+hold on;
+xlabel("Concentration (g/L)");
+ylabel("Attenuation");
+title("Attenuation vs Concentration");
+
+wavelength1 = 400:50:700;
+attenuation5 = 1 ./ wavelength1;
+figure;
+plot(wavelength1, attenuation5, '-or');
+hold on;
+grid on;
+xlabel("Wavelength (nm)");
+ylabel("Attenuation");
+title("Attenuation vs Wavelength");

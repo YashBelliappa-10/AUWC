@@ -1,0 +1,164 @@
+% Prompt the user to input values for absorption and scattering coefficients
+alpha = input("Enter the absorption coefficient (alpha): "); % Absorption coefficient alpha(lambda)
+if alpha >= 0.01 && alpha <= 0.1
+    disp(['Absorption coefficient indicates clean ocean water. Input value: ', num2str(alpha)]);
+elseif alpha > 0.1 && alpha <= 1
+    disp(['Absorption coefficient indicates turbid ocean water. Input value: ', num2str(alpha)]);
+else
+    disp("Invalid input. Absorption coefficient must be between 0.01 and 1 for turbid ocean water or greater than 1 for turbid ocean water.");
+    return; % Exit the program
+end
+
+beta = input("Enter the scattering coefficient (beta): "); % Scattering coefficient beta(lambda)
+if beta >= 0.1 && beta <= 1
+    disp(['Scattering coefficient indicates clean water. Input value: ', num2str(beta)]);
+elseif beta > 10
+    disp(['Scattering coefficient indicates turbid water. Input value: ', num2str(beta)]);
+else
+    disp("Invalid input. Scattering coefficient must be between 0.1 and 1 for clean ocean water or greater than 10 for turbid ocean water.");
+    return; % Exit the program
+end
+
+% Calculate the extinction coefficient C(λ)
+C_lambda = alpha + beta;
+
+% Prompt the user to input power values
+pt = input("Enter the power of the transmitting end (in watts): ");
+pr = input("Enter the power of the receiving end (in watts): ");
+
+% Calculate average power between the transmitting and receiving end
+p = (pr + pt) / 2;
+
+% Prompt the user to input the length of the water channel
+d = input("Enter the length of the water channel (in meters): ");
+
+% Calculate the extinction coefficient C(λ) of the aqueous medium
+C_lambda2 = 1 / d * log(pt / pr);
+
+% Prompt the user to input efficiency values
+etaT = input("Enter the optical efficiency of the transmitter (etaT in percentage): "); % Optical efficiency of the transmitter in percentage
+etaR = input("Enter the optical efficiency of the receiver (etaR in percentage): "); % Optical efficiency of the receiver in percentage
+
+% Convert efficiencies from percentage to fraction
+etaT = etaT / 100;
+etaR = etaR / 100;
+
+% Prompt the user to input angle and aperture area values
+theta = input("Enter the angle (theta) in degrees: ");
+Arec = input("Enter the receiver aperture area (in square meters): ");
+% the below are some valid examples to make the code work further.
+% example to enter the input is 5e-5,1e-6, 7.5e-5, 1e-3, 8.25e-5, 2.5e-6,
+% 9.9e-4, 3.5e-4
+if Arec < 1e-6 || Arec > 1e-3
+    disp("Invalid input. Aperture area should be between 1e-6 and 1e-3 square meters.");
+    return; % Exit the program
+end
+thetao = input("Enter the value for thetao in degrees: ");
+
+% Convert angles from degrees to radians
+theta1 = deg2rad(theta);
+theta2 = deg2rad(thetao);
+
+% Calculate received power (pr) using LOS equation in aqueous medium.
+pr = pt * etaT * etaR * exp(-C_lambda2 * d / cos(theta1)) * Arec * cos(theta1) / (pi * (d * tan(theta2))^2);
+
+% Calculate initial and change in power for SNR calculation
+p1 = input("Enter initial power in the first medium (in watts): ");
+p2 = input("Enter change in power found in the next medium (in watts): ");
+pn = p1 + p2; % Noise produced power
+
+% Calculate Signal-to-Noise Ratio (SNR)
+SNR = 10 * log10(pr / pn);
+
+% Define refractive index as a function of concentration
+% Assuming RI = c / v
+c = 3 * 10^8; % Speed of light in m/s
+v = input("Enter the velocity (in m/s): ");
+lambda = input("Enter the wavelength (in nm): ");
+lambda = lambda * 10^-9; % Convert wavelength from nm to meters
+
+% Function to calculate refractive index based on speed of light and velocity
+calculateRI = @(v) c / v;
+
+% Define concentration ranges
+concentration_clean = 0.01:0.1:1; % Clean ocean concentration range
+concentration_turbid = 1:0.1:10; % Turbid water concentration range
+
+% Calculate refractive index for clean ocean and turbid water
+RI_clean = calculateRI(v);
+RI_turbid = calculateRI(lambda);
+
+% Plot RI vs Concentration
+figure;
+plot(concentration_clean, RI_clean * ones(size(concentration_clean)), '-o', 'DisplayName', 'Clean Ocean');
+hold on;
+plot(concentration_turbid, RI_turbid * ones(size(concentration_turbid)), '-o', 'DisplayName', 'Turbid Water');
+xlabel("Concentration (g/L)");
+ylabel("Refractive Index");
+title("Refractive Index vs Concentration");
+legend('Location', 'best');
+grid on;
+
+
+
+% Plot PR vs Concentration
+concentration_clean = 0.01:0.1:1; % Clean ocean concentration range
+PR_clean = 1 ./ (concentration_clean + 0.5); % Exponential decrease for clean water
+
+concentration_turbid = 1:0.1:10; % Turbid water concentration range
+PR_turbid = 0.5 + 0.5 ./ concentration_turbid; % Hyperbolic curve for turbid water
+
+figure;
+plot(concentration_clean, PR_clean, '-o', 'DisplayName', 'Clean Ocean');
+hold on;
+plot(concentration_turbid, PR_turbid, '-s', 'DisplayName', 'Turbid Water', 'MarkerSize', 8);
+xlabel("Concentration (g/L)");
+ylabel("Received Power (PR)");
+title("Received Power vs Concentration");
+legend('Location', 'best');
+grid on;
+
+% Plot SNR vs Concentration
+concentration_clean = 0.01:0.1:1; % Clean ocean concentration range
+SNR_clean = 10 + 10 * exp(-2 * concentration_clean); % Exponential decrease for clean water
+
+concentration_turbid = 1:0.1:10; % Turbid water concentration range
+SNR_turbid = 10 - 5 ./ concentration_turbid; % Hyperbolic curve for turbid water
+
+figure;
+plot(concentration_clean, SNR_clean, '-o', 'DisplayName', 'Clean Ocean');
+hold on;
+plot(concentration_turbid, SNR_turbid, '-s', 'DisplayName', 'Turbid Water', 'MarkerSize', 8);
+xlabel("Concentration (g/L)");
+ylabel("SNR (dB)");
+title("Signal-to-Noise Ratio (SNR) vs Concentration");
+legend('Location', 'best');
+grid on;
+
+% Plot Attenuation vs Concentration
+concentration_clean = 0.01:0.1:1; % Clean ocean concentration range
+attenuation_clean = 0.5 + 0.5 * exp(-concentration_clean); % Exponential decrease for clean water
+
+concentration_turbid = 1:0.1:10; % Turbid water concentration range
+attenuation_turbid = 1 ./ (concentration_turbid + 0.5); % Hyperbolic curve for turbid water
+
+figure;
+plot(concentration_clean, attenuation_clean, '-o', 'DisplayName', 'Clean Ocean');
+hold on;
+plot(concentration_turbid, attenuation_turbid, '-s', 'DisplayName', 'Turbid Water', 'MarkerSize', 8);
+xlabel("Concentration (g/L)");
+ylabel("Attenuation");
+title("Attenuation vs Concentration");
+legend('Location', 'best');
+grid on;
+
+% Plot Wavelength vs Attenuation
+wavelength1 = 400:50:700;
+attenuation5 = exp(wavelength1 / 100); % Exponential increase
+
+figure;
+plot(wavelength1, attenuation5, '-o', 'MarkerFaceColor', 'r');
+xlabel("Wavelength (nm)");
+ylabel("Attenuation");
+title("Attenuation vs Wavelength");
+grid on;
